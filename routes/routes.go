@@ -40,6 +40,8 @@ func SetupRoutes(r *gin.Engine) {
 		adminGroup.GET("/dashboard", func(c *gin.Context) {
 			c.JSON(200, gin.H{"message": "Bienvenue administrateur"})
 		})
-		// Ajoutez ici vos endpoints admin (ex: gestion des clients, statistiques)
+		// Gestion des livres
+		adminGroup.GET("/books", handlers.GetAllBooks)
+		// Ajoutez ici vos autres endpoints admin (clients, statistiques, etc.)
 	}
 }
