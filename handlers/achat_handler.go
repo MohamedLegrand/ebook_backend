@@ -4,6 +4,8 @@ import (
 	"ebook-backend/models"
 	"ebook-backend/repository"
 	"net/http"
+	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 )
@@ -41,7 +43,6 @@ func CreateAchat(c *gin.Context) {
 		return
 	}
 
-	// Récupérer le livre et son prix
 	livre, err := repository.GetBookByID(input.LivreID)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Livre non trouvé"})
@@ -64,19 +65,18 @@ func CreateAchat(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erreur lors de l'achat"})
 		return
 	}
-	// Mise à jour du stock
 	_ = repository.UpdateBookStock(input.LivreID, livre.Stock-input.Quantite)
 
 	c.JSON(http.StatusCreated, achat)
 }
 
 // GetMyAchats godoc
-// @Summary      Liste des achats du client connecté
-// @Description  Retourne tous les achats effectués par le client authentifié
+// @Summary      Liste des achats du client connecté avec détails
+// @Description  Retourne tous les achats effectués par le client authentifié, avec les informations du livre (titre, image, auteur)
 // @Tags         Achats
 // @Accept       json
 // @Produce      json
-// @Success      200  {array}   models.Achat
+// @Success      200  {array}   models.AchatDetail
 // @Failure      401  {object}  map[string]interface{}
 // @Failure      500  {object}  map[string]interface{}
 // @Security     BearerAuth
@@ -84,7 +84,7 @@ func CreateAchat(c *gin.Context) {
 func GetMyAchats(c *gin.Context) {
 	clientIDVal, _ := c.Get("client_id")
 	clientID := clientIDVal.(int)
-	achats, err := repository.GetAchatsByClient(c.Request.Context(), clientID)
+	achats, err := repository.GetAchatsByClientWithDetails(c.Request.Context(), clientID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -111,4 +111,81 @@ func GetAllAchatsAdmin(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, achats)
+}
+
+// DownloadBook godoc
+// @Summary      Lire ou télécharger un livre acheté
+// @Description  Permet à un client qui a acheté le livre de lire en ligne (PDF) ou télécharger le fichier
+// @Tags         Achats
+// @Produce      application/octet-stream, application/pdf
+// @Param        livre_id path int true "ID du livre"
+// @Success      200  {file}  binary
+// @Failure      400  {object}  map[string]interface{}
+// @Failure      401  {object}  map[string]interface{}
+// @Failure      403  {object}  map[string]interface{}
+// @Failure      404  {object}  map[string]interface{}
+// @Security     BearerAuth
+// @Router       /achat/{livre_id}/download [get]
+func DownloadBook(c *gin.Context) {
+	livreID, err := strconv.Atoi(c.Param("livre_id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "ID de livre invalide"})
+		return
+	}
+
+	clientIDVal, exists := c.Get("client_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "non authentifié"})
+		return
+	}
+	clientID := clientIDVal.(int)
+
+	// Vérifier si le client a acheté ce livre
+	achats, err := repository.GetAchatsByClient(c.Request.Context(), clientID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	achete := false
+	for _, a := range achats {
+		if a.LivreID == livreID {
+			achete = true
+			break
+		}
+	}
+	if !achete {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Vous n'avez pas acheté ce livre"})
+		return
+	}
+
+	// Récupérer le livre pour obtenir le chemin du fichier
+	livre, err := repository.GetBookByID(livreID)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Livre non trouvé"})
+		return
+	}
+	if livre.FilePath == "" {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Fichier non disponible"})
+		return
+	}
+
+	// Extraire l'extension du fichier
+	ext := ""
+	if idx := strings.LastIndex(livre.FilePath, "."); idx != -1 {
+		ext = livre.FilePath[idx:]
+	}
+	if ext == "" {
+		ext = ".pdf"
+	}
+
+	// Si c'est un PDF, on l'affiche dans le navigateur (inline)
+	if strings.ToLower(ext) == ".pdf" {
+		c.Header("Content-Type", "application/pdf")
+		c.Header("Content-Disposition", "inline; filename=\""+livre.Titre+ext+"\"")
+		c.File(livre.FilePath)
+		return
+	}
+
+	// Sinon, on force le téléchargement
+	c.FileAttachment(livre.FilePath, livre.Titre+ext)
 }

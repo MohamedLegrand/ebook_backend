@@ -12,6 +12,7 @@ type Book struct {
     Type        string    `json:"type"`
     Pages       int       `json:"pages"`
     Stock       int       `json:"stock"`
+    FilePath    string    `json:"file_path"` // Chemin du fichier (PDF/EPUB)
     CreatedAt   time.Time `json:"created_at"`
     UpdatedAt   time.Time `json:"updated_at"`
 }

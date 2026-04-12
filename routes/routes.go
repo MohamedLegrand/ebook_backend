@@ -9,14 +9,13 @@ import (
 
 func SetupRoutes(r *gin.Engine) {
 
-	// Routes publiques — pas besoin de token
+	// Routes publiques
 	auth := r.Group("/api/auth")
 	{
 		auth.POST("/register", handlers.Register)
 		auth.POST("/login", handlers.Login)
 	}
 
-	// Route publique pour l'admin
 	r.POST("/api/admin/login", handlers.AdminLogin)
 
 	// Routes protégées (client)
@@ -32,21 +31,22 @@ func SetupRoutes(r *gin.Engine) {
 			})
 		})
 
-		// Routes pour les achats (client)
-		protected.POST("/achat", handlers.CreateAchat)          // créer un achat
-		protected.GET("/client/achats", handlers.GetMyAchats)   // voir ses propres achats
+		// Achats
+		protected.POST("/achat", handlers.CreateAchat)
+		protected.GET("/client/achats", handlers.GetMyAchats)
+		protected.GET("/achat/:livre_id/download", handlers.DownloadBook) // nouvelle route
+		protected.POST("/paiement/initier", handlers.InitierPaiement)
+		
 	}
 
-	// Routes admin protégées (nécessitent token + rôle admin)
+	// Routes admin
 	adminGroup := r.Group("/api/admin")
 	adminGroup.Use(middleware.AuthRequired(), middleware.AdminRequired())
 	{
 		adminGroup.GET("/dashboard", func(c *gin.Context) {
 			c.JSON(200, gin.H{"message": "Bienvenue administrateur"})
 		})
-		// Gestion des livres
 		adminGroup.GET("/books", handlers.GetAllBooks)
-		// Gestion des achats (admin)
 		adminGroup.GET("/achats", handlers.GetAllAchatsAdmin)
 	}
 }
