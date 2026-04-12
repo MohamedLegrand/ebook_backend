@@ -1,0 +1,372 @@
+basePath: /api
+definitions:
+  handlers.AchatInput:
+    properties:
+      livre_id:
+        type: integer
+      quantite:
+        minimum: 1
+        type: integer
+    required:
+    - livre_id
+    - quantite
+    type: object
+  models.Achat:
+    properties:
+      client_id:
+        type: integer
+      created_at:
+        type: string
+      date_achat:
+        type: string
+      id:
+        type: integer
+      livre_id:
+        type: integer
+      montant:
+        description: prix total (quantité * prix unitaire)
+        type: integer
+      quantite:
+        type: integer
+      updated_at:
+        type: string
+    type: object
+  models.Book:
+    properties:
+      auteur:
+        type: string
+      created_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      image:
+        type: string
+      pages:
+        type: integer
+      prix_fcfa:
+        type: integer
+      stock:
+        type: integer
+      titre:
+        type: string
+      type:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  models.Client:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      full_name:
+        type: string
+      id:
+        type: integer
+      updated_at:
+        type: string
+    type: object
+  models.LoginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  models.LoginResponse:
+    properties:
+      client:
+        $ref: '#/definitions/models.Client'
+      token:
+        type: string
+    type: object
+  models.RegisterRequest:
+    properties:
+      confirm_password:
+        type: string
+      email:
+        type: string
+      full_name:
+        type: string
+      password:
+        minLength: 8
+        type: string
+    required:
+    - confirm_password
+    - email
+    - full_name
+    - password
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: support@ebook.com
+    name: Support API
+  description: API de gestion de la librairie en ligne
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: API E-Book
+  version: "1.0"
+paths:
+  /achat:
+    post:
+      consumes:
+      - application/json
+      description: Permet à un client authentifié d'acheter un livre (vérifie le stock,
+        crée un achat, met à jour le stock)
+      parameters:
+      - description: Informations d'achat
+        in: body
+        name: achat
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.AchatInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.Achat'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Acheter un livre
+      tags:
+      - Achats
+  /admin/achats:
+    get:
+      consumes:
+      - application/json
+      description: Récupère l'ensemble des achats de tous les clients (réservé aux
+        administrateurs)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Achat'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: (Admin) Liste tous les achats
+      tags:
+      - Achats
+  /admin/books:
+    get:
+      consumes:
+      - application/json
+      description: Récupère la liste complète des livres (titre, auteur, prix, stock,
+        etc.)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Book'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Liste tous les livres
+      tags:
+      - Livres
+  /admin/login:
+    post:
+      consumes:
+      - application/json
+      description: Authentifie un administrateur et retourne un token JWT avec le
+        rôle "admin"
+      parameters:
+      - description: Identifiants admin (email, mot de passe)
+        in: body
+        name: credentials
+        required: true
+        schema:
+          $ref: '#/definitions/models.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: token et infos admin
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Connexion administrateur
+      tags:
+      - Auth
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Authentifie un client et retourne un token JWT
+      parameters:
+      - description: Identifiants client
+        in: body
+        name: credentials
+        required: true
+        schema:
+          $ref: '#/definitions/models.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.LoginResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Connexion client
+      tags:
+      - Auth
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      description: Crée un compte client avec email, mot de passe et confirmation
+      parameters:
+      - description: Données d'inscription
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: message et client créé
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "409":
+          description: Conflict
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Inscription d'un nouveau client
+      tags:
+      - Auth
+  /client/achats:
+    get:
+      consumes:
+      - application/json
+      description: Retourne tous les achats effectués par le client authentifié
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Achat'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Liste des achats du client connecté
+      tags:
+      - Achats
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

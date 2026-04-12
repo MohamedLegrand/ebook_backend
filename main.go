@@ -1,14 +1,39 @@
 package main
 
 import (
-	"ebook-backend/config"
-	"ebook-backend/routes"
 	"log"
 	"os"
 
+	"ebook-backend/config"
+	"ebook-backend/routes"
+
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
+
+	// Importation de la documentation générée par swag init
+	_ "ebook-backend/docs"
+
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
+
+// @title           API E-Book
+// @version         1.0
+// @description     API de gestion de la librairie en ligne
+// @termsOfService  http://swagger.io/terms/
+
+// @contact.name   Support API
+// @contact.email  support@ebook.com
+
+// @license.name   Apache 2.0
+// @license.url    http://www.apache.org/licenses/LICENSE-2.0.html
+
+// @host      localhost:8080
+// @BasePath  /api
+
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
 
 func main() {
 	// Charger le fichier .env
@@ -24,20 +49,20 @@ func main() {
 	r := gin.Default()
 
 	// Activer CORS pour que React puisse communiquer avec l'API
-	// Sans ça, le navigateur bloquera les requêtes venant de localhost:3000
 	r.Use(func(c *gin.Context) {
 		c.Header("Access-Control-Allow-Origin", "http://localhost:5173")
 		c.Header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
 		c.Header("Access-Control-Allow-Headers", "Content-Type, Authorization")
 
-		// Les requêtes OPTIONS sont envoyées par le navigateur avant chaque requête
-		// C'est ce qu'on appelle le "preflight" — on doit y répondre 200
 		if c.Request.Method == "OPTIONS" {
 			c.AbortWithStatus(204)
 			return
 		}
 		c.Next()
 	})
+
+	// Route pour servir la documentation Swagger UI
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	// Brancher toutes les routes
 	routes.SetupRoutes(r)

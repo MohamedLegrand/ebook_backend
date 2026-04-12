@@ -10,7 +10,18 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// AdminLogin gère la connexion des administrateurs
+// AdminLogin godoc
+// @Summary      Connexion administrateur
+// @Description  Authentifie un administrateur et retourne un token JWT avec le rôle "admin"
+// @Tags         Auth
+// @Accept       json
+// @Produce      json
+// @Param        credentials body models.LoginRequest true "Identifiants admin (email, mot de passe)"
+// @Success      200  {object}  map[string]interface{}  "token et infos admin"
+// @Failure      400  {object}  map[string]interface{}
+// @Failure      401  {object}  map[string]interface{}
+// @Failure      500  {object}  map[string]interface{}
+// @Router       /admin/login [post]
 func AdminLogin(c *gin.Context) {
 	var req models.LoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {

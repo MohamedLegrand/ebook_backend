@@ -4,11 +4,23 @@ import (
     "ebook-backend/config"
     "ebook-backend/models"
     "net/http"
+
     "github.com/gin-gonic/gin"
 )
 
+// GetAllBooks godoc
+// @Summary      Liste tous les livres
+// @Description  Récupère la liste complète des livres (titre, auteur, prix, stock, etc.)
+// @Tags         Livres
+// @Accept       json
+// @Produce      json
+// @Success      200  {array}   models.Book
+// @Failure      500  {object}  map[string]interface{}
+// @Security     BearerAuth
+// @Router       /admin/books [get]
 func GetAllBooks(c *gin.Context) {
-    rows, err := config.DB.Query(c.Request.Context(), "SELECT id, titre, auteur, description, prix_fcfa, image, type, pages, stock, created_at, updated_at FROM livres ORDER BY id DESC")
+    rows, err := config.DB.Query(c.Request.Context(), 
+        "SELECT id, titre, auteur, description, prix_fcfa, image, type, pages, stock, created_at, updated_at FROM livres ORDER BY id DESC")
     if err != nil {
         c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
         return

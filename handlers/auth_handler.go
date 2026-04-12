@@ -11,7 +11,18 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 )
 
-// Register gère l'inscription d'un nouveau client
+// Register godoc
+// @Summary      Inscription d'un nouveau client
+// @Description  Crée un compte client avec email, mot de passe et confirmation
+// @Tags         Auth
+// @Accept       json
+// @Produce      json
+// @Param        request body models.RegisterRequest true "Données d'inscription"
+// @Success      201  {object}  map[string]interface{}  "message et client créé"
+// @Failure      400  {object}  map[string]interface{}
+// @Failure      409  {object}  map[string]interface{}
+// @Failure      500  {object}  map[string]interface{}
+// @Router       /auth/register [post]
 func Register(c *gin.Context) {
 
 	// 1. On récupère et valide les données envoyées par le formulaire React
@@ -58,7 +69,18 @@ func Register(c *gin.Context) {
 	})
 }
 
-// Login gère la connexion d'un client existant
+// Login godoc
+// @Summary      Connexion client
+// @Description  Authentifie un client et retourne un token JWT
+// @Tags         Auth
+// @Accept       json
+// @Produce      json
+// @Param        credentials body models.LoginRequest true "Identifiants client"
+// @Success      200  {object}  models.LoginResponse
+// @Failure      400  {object}  map[string]interface{}
+// @Failure      401  {object}  map[string]interface{}
+// @Failure      500  {object}  map[string]interface{}
+// @Router       /auth/login [post]
 func Login(c *gin.Context) {
 
 	// 1. On récupère email et mot de passe envoyés par le formulaire

@@ -31,6 +31,10 @@ func SetupRoutes(r *gin.Engine) {
 				"email":     clientEmail,
 			})
 		})
+
+		// Routes pour les achats (client)
+		protected.POST("/achat", handlers.CreateAchat)          // créer un achat
+		protected.GET("/client/achats", handlers.GetMyAchats)   // voir ses propres achats
 	}
 
 	// Routes admin protégées (nécessitent token + rôle admin)
@@ -42,6 +46,7 @@ func SetupRoutes(r *gin.Engine) {
 		})
 		// Gestion des livres
 		adminGroup.GET("/books", handlers.GetAllBooks)
-		// Ajoutez ici vos autres endpoints admin (clients, statistiques, etc.)
+		// Gestion des achats (admin)
+		adminGroup.GET("/achats", handlers.GetAllAchatsAdmin)
 	}
 }
