@@ -11,6 +11,29 @@ definitions:
     - livre_id
     - quantite
     type: object
+  handlers.InitierPaiementInput:
+    properties:
+      items:
+        items:
+          properties:
+            livre_id:
+              type: integer
+            quantite:
+              type: integer
+          type: object
+        type: array
+      montant_total:
+        type: integer
+      moyen_paiement:
+        type: string
+      numero_paiement:
+        type: string
+    required:
+    - items
+    - montant_total
+    - moyen_paiement
+    - numero_paiement
+    type: object
   models.Achat:
     properties:
       client_id:
@@ -24,7 +47,33 @@ definitions:
       livre_id:
         type: integer
       montant:
-        description: prix total (quantité * prix unitaire)
+        type: integer
+      quantite:
+        type: integer
+      updated_at:
+        type: string
+    type: object
+  models.AchatDetail:
+    properties:
+      client_id:
+        type: integer
+      client_nom:
+        type: string
+      created_at:
+        type: string
+      date_achat:
+        type: string
+      id:
+        type: integer
+      livre_auteur:
+        type: string
+      livre_id:
+        type: integer
+      livre_image:
+        type: string
+      livre_titre:
+        type: string
+      montant:
         type: integer
       quantite:
         type: integer
@@ -38,6 +87,9 @@ definitions:
       created_at:
         type: string
       description:
+        type: string
+      file_path:
+        description: Chemin du fichier (PDF/EPUB)
         type: string
       id:
         type: integer
@@ -159,6 +211,49 @@ paths:
       security:
       - BearerAuth: []
       summary: Acheter un livre
+      tags:
+      - Achats
+  /achat/{livre_id}/download:
+    get:
+      description: Permet à un client qui a acheté le livre de lire en ligne (PDF)
+        ou télécharger le fichier
+      parameters:
+      - description: ID du livre
+        in: path
+        name: livre_id
+        required: true
+        type: integer
+      produces:
+      - application/octet-stream
+      - ' application/pdf'
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: file
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Lire ou télécharger un livre acheté
       tags:
       - Achats
   /admin/achats:
@@ -339,7 +434,8 @@ paths:
     get:
       consumes:
       - application/json
-      description: Retourne tous les achats effectués par le client authentifié
+      description: Retourne tous les achats effectués par le client authentifié, avec
+        les informations du livre (titre, image, auteur)
       produces:
       - application/json
       responses:
@@ -347,7 +443,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/models.Achat'
+              $ref: '#/definitions/models.AchatDetail'
             type: array
         "401":
           description: Unauthorized
@@ -361,9 +457,55 @@ paths:
             type: object
       security:
       - BearerAuth: []
-      summary: Liste des achats du client connecté
+      summary: Liste des achats du client connecté avec détails
       tags:
       - Achats
+  /paiement/initier:
+    post:
+      consumes:
+      - application/json
+      description: Simule un paiement, enregistre la transaction et les achats associés,
+        met à jour le stock
+      parameters:
+      - description: Détails du paiement (moyen, numéro, montant, articles)
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.InitierPaiementInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: success, reference, message
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Initier un paiement
+      tags:
+      - Paiement
 securityDefinitions:
   BearerAuth:
     in: header

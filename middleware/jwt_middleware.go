@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"ebook-backend/utils"
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -12,6 +13,7 @@ import (
 func AuthRequired() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
+		fmt.Println("DEBUG - Authorization header:", authHeader) // ← log pour voir l'en-tête reçu
 		if authHeader == "" {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Token manquant"})
 			c.Abort()
@@ -34,7 +36,7 @@ func AuthRequired() gin.HandlerFunc {
 
 		c.Set("client_id", claims.ClientID)
 		c.Set("client_email", claims.Email)
-		c.Set("role", claims.Role) // ajout du rôle
+		c.Set("role", claims.Role)
 
 		c.Next()
 	}

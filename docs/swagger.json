@@ -84,6 +84,69 @@
                 }
             }
         },
+        "/achat/{livre_id}/download": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Permet à un client qui a acheté le livre de lire en ligne (PDF) ou télécharger le fichier",
+                "produces": [
+                    "application/octet-stream",
+                    " application/pdf"
+                ],
+                "tags": [
+                    "Achats"
+                ],
+                "summary": "Lire ou télécharger un livre acheté",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID du livre",
+                        "name": "livre_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "file"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
         "/admin/achats": {
             "get": {
                 "security": [
@@ -348,7 +411,7 @@
                         "BearerAuth": []
                     }
                 ],
-                "description": "Retourne tous les achats effectués par le client authentifié",
+                "description": "Retourne tous les achats effectués par le client authentifié, avec les informations du livre (titre, image, auteur)",
                 "consumes": [
                     "application/json"
                 ],
@@ -358,19 +421,87 @@
                 "tags": [
                     "Achats"
                 ],
-                "summary": "Liste des achats du client connecté",
+                "summary": "Liste des achats du client connecté avec détails",
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/models.Achat"
+                                "$ref": "#/definitions/models.AchatDetail"
                             }
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/paiement/initier": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Simule un paiement, enregistre la transaction et les achats associés, met à jour le stock",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Paiement"
+                ],
+                "summary": "Initier un paiement",
+                "parameters": [
+                    {
+                        "description": "Détails du paiement (moyen, numéro, montant, articles)",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handlers.InitierPaiementInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "success, reference, message",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
                         "schema": {
                             "type": "object",
                             "additionalProperties": true
@@ -404,6 +535,40 @@
                 }
             }
         },
+        "handlers.InitierPaiementInput": {
+            "type": "object",
+            "required": [
+                "items",
+                "montant_total",
+                "moyen_paiement",
+                "numero_paiement"
+            ],
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "livre_id": {
+                                "type": "integer"
+                            },
+                            "quantite": {
+                                "type": "integer"
+                            }
+                        }
+                    }
+                },
+                "montant_total": {
+                    "type": "integer"
+                },
+                "moyen_paiement": {
+                    "type": "string"
+                },
+                "numero_paiement": {
+                    "type": "string"
+                }
+            }
+        },
         "models.Achat": {
             "type": "object",
             "properties": {
@@ -423,7 +588,47 @@
                     "type": "integer"
                 },
                 "montant": {
-                    "description": "prix total (quantité * prix unitaire)",
+                    "type": "integer"
+                },
+                "quantite": {
+                    "type": "integer"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.AchatDetail": {
+            "type": "object",
+            "properties": {
+                "client_id": {
+                    "type": "integer"
+                },
+                "client_nom": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "date_achat": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "livre_auteur": {
+                    "type": "string"
+                },
+                "livre_id": {
+                    "type": "integer"
+                },
+                "livre_image": {
+                    "type": "string"
+                },
+                "livre_titre": {
+                    "type": "string"
+                },
+                "montant": {
                     "type": "integer"
                 },
                 "quantite": {
@@ -444,6 +649,10 @@
                     "type": "string"
                 },
                 "description": {
+                    "type": "string"
+                },
+                "file_path": {
+                    "description": "Chemin du fichier (PDF/EPUB)",
                     "type": "string"
                 },
                 "id": {

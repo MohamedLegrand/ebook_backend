@@ -20,6 +20,20 @@ type InitierPaiementInput struct {
     } `json:"items" binding:"required"`
 }
 
+// InitierPaiement godoc
+// @Summary      Initier un paiement
+// @Description  Simule un paiement, enregistre la transaction et les achats associés, met à jour le stock
+// @Tags         Paiement
+// @Accept       json
+// @Produce      json
+// @Param        input body InitierPaiementInput true "Détails du paiement (moyen, numéro, montant, articles)"
+// @Success      200  {object}  map[string]interface{}  "success, reference, message"
+// @Failure      400  {object}  map[string]interface{}
+// @Failure      401  {object}  map[string]interface{}
+// @Failure      404  {object}  map[string]interface{}
+// @Failure      500  {object}  map[string]interface{}
+// @Security     BearerAuth
+// @Router       /paiement/initier [post]
 func InitierPaiement(c *gin.Context) {
     clientIDVal, exists := c.Get("client_id")
     if !exists {
