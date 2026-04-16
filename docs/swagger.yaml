@@ -316,6 +316,97 @@ paths:
       summary: Liste tous les livres
       tags:
       - Livres
+    post:
+      consumes:
+      - application/json
+      description: Crée un nouveau livre (admin uniquement)
+      parameters:
+      - description: Informations du livre
+        in: body
+        name: book
+        required: true
+        schema:
+          $ref: '#/definitions/models.Book'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.Book'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Ajouter un livre
+      tags:
+      - Livres
+  /admin/books/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Supprime un livre par son ID (admin uniquement)
+      parameters:
+      - description: ID du livre
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Supprimer un livre
+      tags:
+      - Livres
+  /admin/clients:
+    get:
+      consumes:
+      - application/json
+      description: Retourne la liste complète des clients (accès réservé aux administrateurs)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Client'
+            type: array
+        "500":
+          description: erreur interne
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Récupérer tous les clients
+      tags:
+      - Admin
   /admin/login:
     post:
       consumes:

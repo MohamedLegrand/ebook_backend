@@ -34,9 +34,8 @@ func SetupRoutes(r *gin.Engine) {
 		// Achats
 		protected.POST("/achat", handlers.CreateAchat)
 		protected.GET("/client/achats", handlers.GetMyAchats)
-		protected.GET("/achat/:livre_id/download", handlers.DownloadBook) // nouvelle route
+		protected.GET("/achat/:livre_id/download", handlers.DownloadBook)
 		protected.POST("/paiement/initier", handlers.InitierPaiement)
-		
 	}
 
 	// Routes admin
@@ -46,7 +45,16 @@ func SetupRoutes(r *gin.Engine) {
 		adminGroup.GET("/dashboard", func(c *gin.Context) {
 			c.JSON(200, gin.H{"message": "Bienvenue administrateur"})
 		})
+
+		// Gestion des livres
 		adminGroup.GET("/books", handlers.GetAllBooks)
+		adminGroup.POST("/books", handlers.CreateBook)
+		adminGroup.DELETE("/books/:id", handlers.DeleteBook)
+
+		// Gestion des clients (utilisateurs)
+		adminGroup.GET("/clients", handlers.GetAllClients)
+
+		// Gestion des achats (admin)
 		adminGroup.GET("/achats", handlers.GetAllAchatsAdmin)
 	}
 }

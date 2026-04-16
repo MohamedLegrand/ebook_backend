@@ -8,9 +8,8 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-// Créer un nouveau client
+// CreateClient crée un nouveau client
 func CreateClient(req models.RegisterRequest) (*models.Client, error) {
-	// Hasher le mot de passe
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 	if err != nil {
 		return nil, err
@@ -45,7 +44,7 @@ func CreateClient(req models.RegisterRequest) (*models.Client, error) {
 	return client, nil
 }
 
-// Trouver un client par email
+// GetClientByEmail trouve un client par son email
 func GetClientByEmail(email string) (*models.Client, error) {
 	client := &models.Client{}
 
@@ -75,8 +74,29 @@ func GetClientByEmail(email string) (*models.Client, error) {
 	return client, nil
 }
 
-// Vérifier le mot de passe
+// CheckPassword vérifie le mot de passe
 func CheckPassword(hashedPassword, plainPassword string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(plainPassword))
 	return err == nil
+}
+
+// GetAllClients retourne tous les clients (admin)
+func GetAllClients() ([]models.Client, error) {
+	query := `SELECT id, full_name, email, created_at, updated_at FROM clients ORDER BY id`
+	rows, err := config.DB.Query(context.Background(), query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var clients []models.Client
+	for rows.Next() {
+		var c models.Client
+		err := rows.Scan(&c.ID, &c.FullName, &c.Email, &c.CreatedAt, &c.UpdatedAt)
+		if err != nil {
+			return nil, err
+		}
+		clients = append(clients, c)
+	}
+	return clients, nil
 }
