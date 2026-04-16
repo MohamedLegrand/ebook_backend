@@ -6,6 +6,12 @@ import (
     "ebook-backend/models"
 )
 
+// MonthlySales représente une vente mensuelle (pour les graphiques)
+type MonthlySales struct {
+    Month  string `json:"month"`
+    Ventes int    `json:"ventes"`
+}
+
 func CreateAchat(ctx context.Context, achat *models.Achat) error {
     query := `INSERT INTO achat (client_id, livre_id, quantite, montant, date_achat, created_at, updated_at)
               VALUES ($1, $2, $3, $4, NOW(), NOW(), NOW())
@@ -83,4 +89,41 @@ func GetAllAchats(ctx context.Context) ([]models.Achat, error) {
         achats = append(achats, a)
     }
     return achats, nil
+}
+
+// GetTotalRevenue retourne la somme de tous les montants des achats
+func GetTotalRevenue(ctx context.Context) (int, error) {
+    var total int
+    query := `SELECT COALESCE(SUM(montant), 0) FROM achat`
+    err := config.DB.QueryRow(ctx, query).Scan(&total)
+    return total, err
+}
+
+// GetMonthlySales retourne les ventes mensuelles (somme des quantités) pour les 12 derniers mois
+func GetMonthlySales(ctx context.Context) ([]MonthlySales, error) {
+    query := `
+        SELECT TO_CHAR(date_achat, 'Mon') as month, 
+               EXTRACT(MONTH FROM date_achat) as month_num,
+               COALESCE(SUM(quantite), 0) as ventes
+        FROM achat
+        WHERE date_achat >= NOW() - INTERVAL '11 months'
+        GROUP BY month, month_num
+        ORDER BY month_num
+    `
+    rows, err := config.DB.Query(ctx, query)
+    if err != nil {
+        return nil, err
+    }
+    defer rows.Close()
+
+    var sales []MonthlySales
+    for rows.Next() {
+        var ms MonthlySales
+        var monthNum int
+        if err := rows.Scan(&ms.Month, &monthNum, &ms.Ventes); err != nil {
+            return nil, err
+        }
+        sales = append(sales, ms)
+    }
+    return sales, nil
 }

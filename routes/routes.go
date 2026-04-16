@@ -56,5 +56,10 @@ func SetupRoutes(r *gin.Engine) {
 
 		// Gestion des achats (admin)
 		adminGroup.GET("/achats", handlers.GetAllAchatsAdmin)
+
+		// Chiffre d'affaires
+		adminGroup.GET("/revenue", handlers.GetRevenue)
+
+		adminGroup.GET("/sales/monthly", handlers.GetMonthlySales)
 	}
 }

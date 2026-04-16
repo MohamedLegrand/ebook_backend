@@ -34,6 +34,18 @@ definitions:
     - moyen_paiement
     - numero_paiement
     type: object
+  handlers.MonthlySalesResponse:
+    properties:
+      month:
+        type: string
+      ventes:
+        type: integer
+    type: object
+  handlers.RevenueResponse:
+    properties:
+      revenue:
+        type: integer
+    type: object
   models.Achat:
     properties:
       client_id:
@@ -446,6 +458,52 @@ paths:
       summary: Connexion administrateur
       tags:
       - Auth
+  /admin/revenue:
+    get:
+      consumes:
+      - application/json
+      description: Retourne le montant total des ventes (somme des montants des achats)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.RevenueResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Chiffre d'affaires total
+      tags:
+      - Admin
+  /admin/sales/monthly:
+    get:
+      consumes:
+      - application/json
+      description: Retourne le nombre de ventes (quantité totale) par mois
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/handlers.MonthlySalesResponse'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Ventes mensuelles
+      tags:
+      - Admin
   /auth/login:
     post:
       consumes:
